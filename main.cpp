@@ -34,10 +34,11 @@ public:
 			click_counter--;
 			click_timer.set(TICK_MS);
 		}
-		
-		if ( click_counter <= 0 ) {
-			ss_post_quit_message();
-		}
+	}
+	
+	bool is_finished()
+	{
+		return click_counter <= 0;
 	}
 };
 
@@ -93,6 +94,31 @@ void test_bbox_aligned(vector2 &c1, float r1, vector2 &c2, float r2)
 	}
 }
 
+// Example of using system_process.
+//
+void test_system_process( float timescale = 1.0f )
+{
+	// Set timescale.
+	ss_set_timescale(timescale);
+	cout << "Speed: " << fl2i(timescale * 100.0f) << "%" << endl;
+	
+	// Create a test process.
+	test_process *proc = new test_process();
+	
+	// Do frame as long as no quit message is posted.
+	//
+	while ( !proc->is_finished() ) {
+		ss_do_frame();
+	}
+	
+	// Kill the process.
+	delete proc;
+	proc = NULL;
+	
+	// Return timescale to normal.
+	ss_set_timescale(1.0f);
+}
+
 int main() {
 	
 	// Test checksum on strings.
@@ -129,18 +155,10 @@ int main() {
 	//
 	ss_initialize();
 	
-	// Create a test process.
-	test_process *proc = new test_process();
-	
-	// Do frame as long as no quit message is posted.
-	//
-	while ( !ss_is_quit_message_posted() ) {
-		ss_do_frame();
-	}
-	
-	// Kill the process.
-	delete proc;
-	proc = NULL;
+	// Show examples of speed.
+	test_system_process();
+	test_system_process(2.0f);
+	test_system_process(0.5f);
 	
 	ss_shutdown();
 	
