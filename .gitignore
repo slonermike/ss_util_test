@@ -2,3 +2,6 @@ ss_util/*
 ss_util_test
 .DS_Store
 *.o
+CMakeCache.txt
+CMakeFiles/*
+build/*
