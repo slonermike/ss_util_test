@@ -3,15 +3,46 @@
 
 #include "ss_util/ss.h"
 #include "ss_util/checksum.h"
+#include "ss_util/system_process.h"
 #include "ss_util/timestamp.h"
 
 #include "ss_util/math/vector.h"
 #include "ss_util/math/matrix.h"
-
 #include "ss_util/math/bbox.h"
 
 using namespace std;
 
+// Example of using system_process
+//
+class test_process : public system_process {
+private:
+	timestamp click_timer;
+	int click_counter;
+	static const int TICK_MS = 1000;
+public:
+	
+	test_process() {
+		click_counter = 5;
+		click_timer.set(TICK_MS);
+	}
+	
+	void process() {
+		system_process::process();
+		
+		if ( click_timer.elapsed() ) {
+			cout << "T-Minus: " << click_counter << endl;
+			click_counter--;
+			click_timer.set(TICK_MS);
+		}
+		
+		if ( click_counter <= 0 ) {
+			ss_post_quit_message();
+		}
+	}
+};
+
+// Example of using checksum
+//
 bool test_string(const char * str1, const char * str2, bool insensitive = true)
 {
 	bool equal = false;
@@ -33,6 +64,9 @@ bool test_string(const char * str1, const char * str2, bool insensitive = true)
 	return equal;
 }
 
+
+// Example of using matrices/vectors.
+//
 void print_vector( const vector2 &v )
 {
 	cout << "[\t" << v.x << "\t" << v.y << "\t]" << endl;
@@ -44,6 +78,9 @@ void print_matrix( const matrix &m )
 	print_vector(m.uvec);
 }
 
+
+// Example of using bounding boxes.
+//
 void test_bbox_aligned(vector2 &c1, float r1, vector2 &c2, float r2)
 {
 	bbox_aligned box1(c1 - vector2(r1,r1), c1 + vector2(r1,r1));
@@ -59,11 +96,13 @@ void test_bbox_aligned(vector2 &c1, float r1, vector2 &c2, float r2)
 int main() {
 	
 	// Test checksum on strings.
+	//
 	test_string( "Mikey", "Mikey" );
 	test_string( "Mikey", "mikey" );
 	test_string( "Mikey", "mikey", false );
 	
 	// Test vectors/matrices.
+	//
 	vector2 up_vector(0.0f, 1.0f);
 
 	cout << "Up Vector: ";
@@ -86,16 +125,24 @@ int main() {
 	test_bbox_aligned(origin, 5.0f, two_five, 5.0f);		// Collide
 	test_bbox_aligned(origin, 1.0f, two_five, 1.0f);		// Miss
 	
-	ss_init();
+	// Test system processes.
+	//
+	ss_initialize();
 	
-	for ( int i = 5; i > 0; i-- ) {
-		timestamp ts;
-		ts.set(1000);		// Set timestamp for 1000 milliseconds.
-		while ( !ts.elapsed() ) {
-			ss_do_frame();			
-		}
-		cout << "T-Minus: " << i << endl;
+	// Create a test process.
+	test_process *proc = new test_process();
+	
+	// Do frame as long as no quit message is posted.
+	//
+	while ( !ss_is_quit_message_posted() ) {
+		ss_do_frame();
 	}
+	
+	// Kill the process.
+	delete proc;
+	proc = NULL;
+	
+	ss_shutdown();
 	
 	return 0;
 }
