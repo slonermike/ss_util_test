@@ -1,7 +1,9 @@
 #include <iostream>
 #include <string>
 
+#include "ss_util/ss.h"
 #include "ss_util/checksum.h"
+#include "ss_util/timestamp.h"
 
 #include "ss_util/math/vector.h"
 #include "ss_util/math/matrix.h"
@@ -83,6 +85,17 @@ int main() {
 	vector2 two_five(2.5f,2.5f);
 	test_bbox_aligned(origin, 5.0f, two_five, 5.0f);		// Collide
 	test_bbox_aligned(origin, 1.0f, two_five, 1.0f);		// Miss
+	
+	ss_init();
+	
+	for ( int i = 5; i > 0; i-- ) {
+		timestamp ts;
+		ts.set(1000);		// Set timestamp for 1000 milliseconds.
+		while ( !ts.elapsed() ) {
+			ss_do_frame();			
+		}
+		cout << "T-Minus: " << i << endl;
+	}
 	
 	return 0;
 }
