@@ -11,6 +11,7 @@
 #include "ss_util/math/bbox.h"
 
 #include "ss_util/structures/fixed_array.h"
+#include "ss_util/structures/hash_table.h"
 #include "ss_util/structures/static_pool.h"
 
 using namespace std;
