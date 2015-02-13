@@ -10,6 +10,7 @@
 #include "ss_util/math/matrix.h"
 #include "ss_util/math/bbox.h"
 
+#include "ss_util/structures/fixed_array.h"
 #include "ss_util/structures/static_pool.h"
 
 using namespace std;
@@ -46,7 +47,7 @@ public:
 
 // Example of using checksum
 //
-bool test_string(const char * str1, const char * str2, bool insensitive = true)
+bool test_string( const char * str1, const char * str2, bool insensitive = true )
 {
 	bool equal = false;
 	
@@ -84,7 +85,7 @@ void print_matrix( const matrix &m )
 
 // Example of using bounding boxes.
 //
-void test_bbox_aligned(vector2 &c1, float r1, vector2 &c2, float r2)
+void test_bbox_aligned( vector2 &c1, float r1, vector2 &c2, float r2 )
 {
 	bbox_aligned box1(c1 - vector2(r1,r1), c1 + vector2(r1,r1));
 	bbox_aligned box2(c2 - vector2(r2,r2), c2 + vector2(r2,r2));
@@ -96,13 +97,22 @@ void test_bbox_aligned(vector2 &c1, float r1, vector2 &c2, float r2)
 	}
 }
 
-// Example of static pool.
-//
 struct string_container
 {
 	static const int size = 32;
 	string_container *prev, *next;
 	char val[size];
+	
+	string_container()
+	{
+		val[0] = '\0';
+	}
+	
+	string_container(const char *str)
+	{
+		prev = next = NULL;
+		set(str);
+	}
 	
 	void set( const char *str )
 	{
@@ -110,9 +120,38 @@ struct string_container
 	}
 };
 
-void print_string_pool( static_pool<string_container> *pool)
+// Example of fixed array.
+//
+void print_fixed_array( fixed_array<string_container> *array )
 {
-	cout << "Printing Pool - " << pool->num_free << "/" << pool->num_items << " free" << endl;
+	cout << "Printing Fixed Array - " << array->size() << "/" << array->max_size() << " used" << endl;
+
+	for ( int i = 0; i < array->size(); i++ )
+	{
+		cout << array->pointer_at(i)->val << endl;	
+	}
+}
+
+void test_fixed_array()
+{
+	const int FIXED_ARRAY_SIZE = 8;
+	fixed_array<string_container> my_array(FIXED_ARRAY_SIZE);
+	my_array.append(string_container("Frankie"));
+	my_array.append(string_container("Joey"));
+	my_array.insert_at_index(string_container("Ronaldo"), 1);
+	
+	print_fixed_array(&my_array);
+	
+	my_array.remove_at_index(1);
+	
+	print_fixed_array(&my_array);
+}
+
+// Example of static pool.
+//
+void print_string_pool( static_pool<string_container> *pool )
+{
+	cout << "Printing Static Pool - " << pool->num_items - pool->num_free << "/" << pool->num_items << " used" << endl;
 	string_container *cur = NULL;
 	DL_FOREACH(pool->used_lists[0], cur)
 	{
@@ -148,6 +187,8 @@ void test_static_pool()
 	}
 	
 	print_string_pool(test_pool);
+	
+	delete test_pool;
 }
 
 // Example of using system_process.
@@ -206,6 +247,10 @@ int main() {
 	vector2 two_five(2.5f,2.5f);
 	test_bbox_aligned(origin, 5.0f, two_five, 5.0f);		// Collide
 	test_bbox_aligned(origin, 1.0f, two_five, 1.0f);		// Miss
+	
+	// Test fixed array.
+	//
+	test_fixed_array();
 	
 	// Test static pools.
 	//
