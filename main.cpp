@@ -10,6 +10,8 @@
 #include "ss_util/math/matrix.h"
 #include "ss_util/math/bbox.h"
 
+#include "ss_util/structures/static_pool.h"
+
 using namespace std;
 
 // Example of using system_process
@@ -94,6 +96,60 @@ void test_bbox_aligned(vector2 &c1, float r1, vector2 &c2, float r2)
 	}
 }
 
+// Example of static pool.
+//
+struct string_container
+{
+	static const int size = 32;
+	string_container *prev, *next;
+	char val[size];
+	
+	void set( const char *str )
+	{
+		memcpy(val, str, size);
+	}
+};
+
+void print_string_pool( static_pool<string_container> *pool)
+{
+	cout << "Printing Pool - " << pool->num_free << "/" << pool->num_items << " free" << endl;
+	string_container *cur = NULL;
+	DL_FOREACH(pool->used_lists[0], cur)
+	{
+		cout << cur->val << endl;
+	}
+}
+
+void test_static_pool()
+{
+	const int NUM_STRINGS = 8;
+	static_pool<string_container> *test_pool = new static_pool<string_container>( NUM_STRINGS );
+	string_container *string1 = test_pool->alloc();
+	string_container *string2 = test_pool->alloc();
+	string_container *string3 = test_pool->alloc();
+	string_container *string4 = test_pool->alloc();
+	
+	// Populate the values allocated from the pool.
+	string1->set("Spongebob");
+	string2->set("Ren");
+	string3->set("Spongebob");
+	string4->set("Stimpy");
+	
+	print_string_pool(test_pool);
+	
+	// Remove all values "Spongebob"
+	string_container *cur = NULL, *next = NULL;
+	DL_FOREACH_DELETE_SAFE(test_pool->used_lists[0], cur, next)
+	{
+		if ( strcmp(cur->val, "Spongebob") == 0)
+		{
+			test_pool->free(cur);
+		}
+	}
+	
+	print_string_pool(test_pool);
+}
+
 // Example of using system_process.
 //
 void test_system_process( float timescale = 1.0f )
@@ -150,6 +206,11 @@ int main() {
 	vector2 two_five(2.5f,2.5f);
 	test_bbox_aligned(origin, 5.0f, two_five, 5.0f);		// Collide
 	test_bbox_aligned(origin, 1.0f, two_five, 1.0f);		// Miss
+	
+	// Test static pools.
+	//
+	test_static_pool();
+	
 	
 	// Test system processes.
 	//
